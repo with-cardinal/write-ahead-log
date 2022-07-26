@@ -83,4 +83,8 @@ export class WriteAheadLog {
     await this.flush();
     await this._handle.close();
   }
+
+  async crash(): Promise<void> {
+    await this._handle.close();
+  }
 }

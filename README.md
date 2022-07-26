@@ -64,9 +64,14 @@ Flush log to disk. Logs are flushed automatically every 32kib, but it's
 important to flush on transaction commits to ensure the transaction reaches 
 disk.
 
-#### `close() : Promise<string>`
+#### `close() : Promise<void>`
 
 Flushes any buffered data and closes the log.
+
+#### `crash() : Promise<void>`
+
+Simulates a crash by closing the log without flushing any pending writes. 
+Useful for testing.
 
 ### `LogCursor`
 
