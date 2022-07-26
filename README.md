@@ -52,6 +52,10 @@ Returns the filename for the current log file with relative path.
 
 Returns the current log number.
 
+#### `recover() : Promise<LogCursor>`
+
+Returns a `LogCursor` for recovering the current log.
+
 #### `append(msg: Buffer) : Promise<void>`
 
 Append `msg` to the log.
@@ -60,15 +64,11 @@ Append `msg` to the log.
 
 Rotates the log and returns the name of the file that was just rotated from.
 
-### WALReader
+### `LogCursor`
 
-#### `constructor(logDir: string, name: string)`
+#### `next() : Promise<Buffer | undefined>`
 
-Construct a `WALReader` for the given directory with the given name.
-
-#### `next() : Promise<Buffer>`
-
-Read the next log message from the `WALReader`
+Read the next log entry.
 
 ## License
 
