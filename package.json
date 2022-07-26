@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "description": "A write ahead log implementation for Cardinal",
   "main": "dist/index.js",
-
   "scripts": {
     "test": "jest",
     "lint": "eslint src/**/*.ts",
@@ -34,6 +33,7 @@
     "node": "16.16.0"
   },
   "dependencies": {
-    "eslint-plugin-prettier": "4.2.1"
+    "eslint-plugin-prettier": "4.2.1",
+    "farmhash": "3.2.2"
   }
 }

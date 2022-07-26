@@ -1,7 +1,6 @@
 # write-ahead-log
 
-A generalized write ahead log implementation. It's based on [LevelDB's write 
-ahead log](https://github.com/google/leveldb/blob/main/doc/log_format.md).
+A generalized write ahead log implementation.
 
 ## Installation
 
@@ -36,9 +35,12 @@ if (log.byteLength > 4194304) {
 
 ### `WriteAheadLog`
 
-#### `constructor(logDir: string, name: string)`
+#### `init(logDir: string, name: string) : Promise<[WriteAheadLog, LogCursor | undefined]>`
 
-Constructs a new write ahead log targeting `logDir`. Will generate log files with names like `{name}-{logNum}.wal`
+Constructs a new write ahead log targeting `logDir`, which will generate log 
+files with names like `{name}-{logNum}.wal`. Returns the new write ahead log 
+and a `LogCursor` that allows iteration of any pending operations on the last 
+log.
 
 #### `byteLength`
 
@@ -52,17 +54,19 @@ Returns the filename for the current log file with relative path.
 
 Returns the current log number.
 
-#### `recover() : Promise<LogCursor>`
-
-Returns a `LogCursor` for recovering the current log.
-
 #### `append(msg: Buffer) : Promise<void>`
 
 Append `msg` to the log.
 
-#### `rotate() : Promise<string>`
+#### `flush() : Promise<void>`
 
-Rotates the log and returns the name of the file that was just rotated from.
+Flush log to disk. Logs are flushed automatically every 32kib, but it's 
+important to flush on transaction commits to ensure the transaction reaches 
+disk.
+
+#### `close() : Promise<string>`
+
+Flushes any buffered data and closes the log.
 
 ### `LogCursor`
 
