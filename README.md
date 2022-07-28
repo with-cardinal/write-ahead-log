@@ -35,12 +35,18 @@ if (log.byteLength > 4194304) {
 
 ### `WriteAheadLog`
 
-#### `init(logDir: string, name: string) : Promise<[WriteAheadLog, LogCursor | undefined]>`
+#### `init(logDir: string, name: string, logLimit: number, recoveryCallback: RecoveryCallback) : Promise<WriteAheadLog]>`
 
 Constructs a new write ahead log targeting `logDir`, which will generate log 
 files with names like `{name}-{logNum}.wal`. Returns the new write ahead log 
-and a `LogCursor` that allows iteration of any pending operations on the last 
-log.
+and calls `cb` if there are any records to recover from prior logs.
+
+##### Parameters
+
+- `logDir` - the directory to store logs in
+- `name` - the filename pattern to use when writing logs. Files will be written as `{name}-{num}.wal` within `logDir`
+- `logLimit` - the target number of bytes for each log file. This isn't a hard limit, but only one record will be written that exceeds log limit before rotating.
+- `recoveryCallback` - a callback of the form `(valid: boolean, msg?: Buffer) => void` that is called for each recovered statement from the log. The `valid` argument is true when no corruption was detected within the record, or false if it was determined to be corrupt. `msg` is passed only if the `valid` flag is `true`.
 
 #### `path`
 
@@ -49,6 +55,10 @@ Returns the filename for the current log file with relative path.
 #### `append(msg: Buffer) : Promise<void>`
 
 Append `msg` to the log.
+
+##### Parameters
+
+- `msg` - the message to add to the log
 
 #### `flush() : Promise<void>`
 
@@ -64,12 +74,6 @@ Flushes any buffered data and closes the log.
 
 Simulates a crash by closing the log without flushing any pending writes. 
 Useful for testing.
-
-### `LogCursor`
-
-#### `next() : Promise<Buffer | undefined>`
-
-Read the next log entry.
 
 ## License
 
