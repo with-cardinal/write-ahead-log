@@ -13,7 +13,12 @@ afterAll(async () => {
 });
 
 test("init", async () => {
-  const wal = await WriteAheadLog.init(testDir, "init", async () => undefined);
+  const wal = await WriteAheadLog.init(
+    testDir,
+    "init",
+    4194304,
+    async () => undefined
+  );
   await wal.append(Buffer.from("hello world"));
   const statResult = await fs.stat(wal.path);
   await wal.close();
@@ -27,6 +32,7 @@ test("rotate", async () => {
   const wal = await WriteAheadLog.init(
     testDir,
     "rotate",
+    4194304,
     async () => undefined
   );
   wal.onRotate = async () => {
@@ -47,6 +53,7 @@ test("recover", async () => {
   const wal = await WriteAheadLog.init(
     testDir,
     "recover",
+    4194304,
     async () => undefined
   );
 
@@ -65,6 +72,6 @@ test("recover", async () => {
     counter++;
   };
 
-  await WriteAheadLog.init(testDir, "recover", cb);
+  await WriteAheadLog.init(testDir, "recover", 4194304, cb);
   expect(counter).toBe(1815);
 });

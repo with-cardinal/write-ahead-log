@@ -3,7 +3,6 @@ import path from "path";
 import { fingerprint32 } from "farmhash";
 
 const WRITE_THESHOLD = 32768;
-const LOG_LIMIT = 4194304;
 
 export type RecoveryCallback = (valid: boolean, msg?: Buffer) => Promise<void>;
 export type RotateCallback = () => Promise<void>;
@@ -90,31 +89,35 @@ export class WriteAheadLog {
   private _logNum = 0;
   private _handle: fs.FileHandle;
   private _onRotate?: RotateCallback;
+  private _logLimit: number;
 
   private pendingWrites: Buffer[] = [];
 
   static async init(
     dirPath: string,
     name: string,
+    logLimit: number,
     cb: RecoveryCallback
   ): Promise<WriteAheadLog> {
     await recover(dirPath, name, cb);
 
     const logNum = 0;
     const handle = await fs.open(logPath(dirPath, name, logNum), "wx");
-    return new WriteAheadLog(dirPath, name, logNum, handle);
+    return new WriteAheadLog(dirPath, name, logNum, logLimit, handle);
   }
 
   constructor(
     dirPath: string,
     name: string,
     logNum: number,
+    logLimit: number,
     handle: fs.FileHandle
   ) {
     this.dirPath = dirPath;
     this.name = name;
     this._logNum = logNum;
     this._handle = handle;
+    this._logLimit = logLimit;
   }
 
   get path(): string {
@@ -151,7 +154,10 @@ export class WriteAheadLog {
 
     const buf = Buffer.concat(this.pendingWrites);
 
-    if (this._byteLength > 0 && this._byteLength + buf.byteLength > LOG_LIMIT) {
+    if (
+      this._byteLength > 0 &&
+      this._byteLength + buf.byteLength > this._logLimit
+    ) {
       await this.rotate();
     }
 
