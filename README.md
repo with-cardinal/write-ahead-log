@@ -12,23 +12,32 @@ npm install @withcardinal/write-ahead-log
 
 A single class, WriteAheadLog is exposed.
 
-```
-const log = new WriteAheadLog(logDir: string);
+```javascript
+const log = new WriteAheadLog(
+  ".",
+  "log",
+  4194304,
+  (valid, msg) => recover(msg)
+);
 ```
 
 Logs are appended to with `append`:
 
-```
+```javascript
 await log.append(msg: Buffer);
 ```
 
-As you append to the log you can track the byteLength of the log with `byteLength`, and then `rotate` the log once it has reached a target length. Resolving the log will start appending to a new log file.
+Appends are buffered until 32kib of log data are appended or `flush` is called.
+It's important to call `flush` any time a transaction is committed so that it's stored to disk.
 
+```javascript
+await wal.flush();
 ```
-if (log.byteLength > 4194304) {
-  const oldFile = await log.rotate();
-  await fs.rm(oldFile);
-}
+
+Be sure to close the write-ahead-log during any graceful shutdown of your service:
+
+```javascript
+await wal.close();
 ```
 
 ## API Documentation
