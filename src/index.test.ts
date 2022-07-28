@@ -1,23 +1,70 @@
-import { mkdtemp, rm, stat } from "fs/promises";
+import fs from "fs/promises";
 import { WriteAheadLog } from ".";
+import path from "path";
 
-describe("on empty directory", () => {
-  let testDir: string;
+let testDir: string;
 
-  beforeAll(async () => {
-    testDir = await mkdtemp("tmp/test");
-  });
+beforeAll(async () => {
+  testDir = await fs.mkdtemp("tmp/test");
+});
 
-  afterAll(async () => {
-    await rm(testDir, { recursive: true });
-  });
+afterAll(async () => {
+  await fs.rm(testDir, { recursive: true });
+});
 
-  test("init", async () => {
-    const wal = await WriteAheadLog.init(testDir, "from-empty");
-    await wal.append(Buffer.from("hello world"));
-    await wal.close();
+test("init", async () => {
+  const wal = await WriteAheadLog.init(testDir, "init", async () => undefined);
+  await wal.append(Buffer.from("hello world"));
+  const statResult = await fs.stat(wal.path);
+  await wal.close();
 
-    const statResult = await stat(wal.path);
-    expect(statResult).toBeTruthy();
-  });
+  expect(statResult).toBeTruthy();
+});
+
+test("rotate", async () => {
+  let counter = 0;
+
+  const wal = await WriteAheadLog.init(
+    testDir,
+    "rotate",
+    async () => undefined
+  );
+  wal.onRotate = async () => {
+    counter++;
+  };
+
+  const msg = "w".repeat(1000);
+
+  for (let i = 0; i < 10000; i++) {
+    await wal.append(Buffer.from(msg));
+  }
+  await wal.close();
+
+  expect(counter).toBe(2);
+});
+
+test("recover", async () => {
+  const wal = await WriteAheadLog.init(
+    testDir,
+    "recover",
+    async () => undefined
+  );
+
+  // write enough data to go past log 0
+  const msg = "w".repeat(1000);
+  for (let i = 0; i < 10000; i++) {
+    await wal.append(Buffer.from(msg));
+  }
+  await wal.crash();
+
+  const beforeHandle = await fs.open(path.join(testDir, "recover-0.wal"), "w");
+  await beforeHandle.close();
+
+  let counter = 0;
+  const cb = async () => {
+    counter++;
+  };
+
+  await WriteAheadLog.init(testDir, "recover", cb);
+  expect(counter).toBe(1815);
 });

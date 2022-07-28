@@ -42,17 +42,9 @@ files with names like `{name}-{logNum}.wal`. Returns the new write ahead log
 and a `LogCursor` that allows iteration of any pending operations on the last 
 log.
 
-#### `byteLength`
-
-Returns the length of bytes written to the current log file.
-
 #### `path`
 
 Returns the filename for the current log file with relative path.
-
-#### `logNum`
-
-Returns the current log number.
 
 #### `append(msg: Buffer) : Promise<void>`
 
