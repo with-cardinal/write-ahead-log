@@ -3,6 +3,7 @@ import path from "path";
 import { fingerprint32 } from "farmhash";
 
 const WRITE_THESHOLD = 32768;
+const FLUSH_INTERVAL = 3000;
 
 export type RecoveryCallback = (valid: boolean, msg?: Buffer) => Promise<void>;
 export type RotateCallback = () => Promise<void>;
@@ -93,6 +94,8 @@ export class WriteAheadLog {
 
   private pendingWrites: Buffer[] = [];
 
+  private _interval: NodeJS.Timeout;
+
   static async init(
     dirPath: string,
     name: string,
@@ -103,6 +106,7 @@ export class WriteAheadLog {
 
     const logNum = 0;
     const handle = await fs.open(logPath(dirPath, name, logNum), "wx");
+
     return new WriteAheadLog(dirPath, name, logNum, logLimit, handle);
   }
 
@@ -118,6 +122,10 @@ export class WriteAheadLog {
     this._logNum = logNum;
     this._handle = handle;
     this._logLimit = logLimit;
+
+    this._interval = setInterval(() => {
+      this.flush();
+    }, FLUSH_INTERVAL);
   }
 
   get path(): string {
@@ -181,12 +189,14 @@ export class WriteAheadLog {
   }
 
   async close(): Promise<void> {
+    clearInterval(this._interval);
     await this.flush();
     await this._handle.close();
     await fs.unlink(this.path);
   }
 
   async crash(): Promise<void> {
+    clearInterval(this._interval);
     await this._handle.close();
   }
 }
