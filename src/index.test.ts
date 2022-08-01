@@ -72,6 +72,7 @@ test("recover", async () => {
     counter++;
   };
 
-  await WriteAheadLog.init(testDir, "recover", 4194304, cb);
+  const recovered = await WriteAheadLog.init(testDir, "recover", 4194304, cb);
   expect(counter).toBe(1815);
+  await recovered.close();
 });

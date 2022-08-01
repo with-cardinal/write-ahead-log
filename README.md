@@ -48,7 +48,8 @@ await wal.close();
 
 Constructs a new write ahead log targeting `logDir`, which will generate log 
 files with names like `{name}-{logNum}.wal`. Returns the new write ahead log 
-and calls `cb` if there are any records to recover from prior logs.
+and calls `cb` if there are any records to recover from prior logs. An interval
+is created in the background to flush outstanding log entries every 3 seconds.
 
 ##### Parameters
 
